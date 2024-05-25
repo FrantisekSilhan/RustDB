@@ -27,6 +27,7 @@ app.get("/api/item", async (req, res) => {
 
     return res.json({ success: true, data: dbItem });
   } catch (err) {
+    fs.appendFileSync(path.join(__dirname, "..", "logs", "error.log"), `Error fetching item ${item}: ${err}\n`);
     return res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
@@ -47,32 +48,11 @@ app.listen(port, async () => {
     }
   });
   
-  const { serialize, db } = require("./db");
-
-  serialize();
-
-  const params_save = await new Promise((resolve, reject) => {
-    db.get("SELECT * FROM save", (err, row) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      resolve(row);
-    });
-  });
-
-  if (!params_save) {
-    db.run("INSERT INTO save (start, total_count) VALUES (?, ?)", [0, 0]);
-  } else {
-    const { set_params } = require("./market");
-    set_params(params_save.start, params_save.total_count);
-  }
-
-  db.close();
+  require("./db").serialize();
 
   console.log(`Server is running on port ${port}\nhttp://localhost:${port}`);
 
-  const { fetch_market_data } = require("./market"); 
+  const { fetch_market_data, load_last_params } = require("./market"); 
+  load_last_params();
   setInterval(fetch_market_data, 30000);
 });
