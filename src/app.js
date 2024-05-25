@@ -31,6 +31,10 @@ app.get("/api/item", async (req, res) => {
   }
 });
 
+app.use((_, res) => {
+  res.status(404).json({ success: false, error: "Route not found" });
+});
+
 app.listen(port, async () => {
   const paths = [
     path.join(__dirname, "..", "data"),
