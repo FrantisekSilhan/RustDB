@@ -5,6 +5,8 @@ const port = 6978;
 const fs = require("fs");
 const path = require("path");
 
+app.use(express.urlencoded({ extended: true }));
+
 app.get("/api/item", async (req, res) => {
   const item = req.query.item;
   const { db } = require("./db");
