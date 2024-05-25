@@ -65,6 +65,7 @@ const fetch_market_data = async () => {
     params.start = new_start > total_count ? 0 : new_start;
 
     db.run("UPDATE save SET start = ?, total_count = ?", [params.start, total_count]);
+    db.close();
   } catch (error) {
     const error_time = new Date().toLocaleString();
     const error_message = `Error fetching market data at ${error_time}: ${error}\n`;

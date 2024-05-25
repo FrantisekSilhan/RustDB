@@ -20,6 +20,7 @@ app.get("/api/item", async (req, res) => {
         resolve(row);
       });
     });
+    db.close();
 
     if (!dbItem) {
       return res.status(404).json({ success: false, error: "Item not found" });
@@ -27,6 +28,7 @@ app.get("/api/item", async (req, res) => {
 
     return res.json({ success: true, data: dbItem });
   } catch (err) {
+    db.close();
     return res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
@@ -68,6 +70,8 @@ app.listen(port, async () => {
     const { set_params } = require("./market");
     set_params(params_save.start, params_save.total_count);
   }
+
+  db.close();
 
   console.log(`Server is running on port ${port}\nhttp://localhost:${port}`);
 
