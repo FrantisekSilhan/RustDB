@@ -11,7 +11,7 @@ app.get("/api/item", async (req, res) => {
 
   try {
     const dbItem = await new Promise((resolve, reject) => {
-      db.get("SELECT * FROM items WHERE name = ?", [item], (err, row) => {
+      db.get("SELECT * FROM items WHERE LOWER(name) = ?", [item.toLowerCase()], (err, row) => {
         if (err) {
           reject(err);
           return;
