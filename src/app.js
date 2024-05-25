@@ -5,7 +5,31 @@ const port = 6978;
 const fs = require("fs");
 const path = require("path");
 
-// TODO: Add api routes here
+app.get("/api/item", async (req, res) => {
+  const item = req.query.item;
+  const { db } = require("./db");
+
+  try {
+    const dbItem = await new Promise((resolve, reject) => {
+      db.get("SELECT * FROM items WHERE name = ?", [item], (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+  
+        resolve(row);
+      });
+    });
+
+    if (!dbItem) {
+      return res.status(404).json({ success: false, error: "Item not found" });
+    }
+
+    return res.json({ success: true, data: dbItem });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Internal server error" });
+  }
+});
 
 app.listen(port, async () => {
   const paths = [
@@ -44,5 +68,5 @@ app.listen(port, async () => {
   console.log(`Server is running on port ${port}\nhttp://localhost:${port}`);
 
   const { fetch_market_data } = require("./market"); 
-  setInterval(fetch_market_data, 10000);
+  setInterval(fetch_market_data, 30000);
 });
