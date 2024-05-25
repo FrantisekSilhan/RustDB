@@ -1,0 +1,25 @@
+{
+  "name": "rustdb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FrantisekSilhan/RustDb.git"
+  },
+  "author": "František Šilhán",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FrantisekSilhan/RustDb/issues"
+  },
+  "homepage": "https://github.com/FrantisekSilhan/RustDb#readme",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  }
+}
