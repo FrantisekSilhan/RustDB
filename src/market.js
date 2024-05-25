@@ -22,6 +22,7 @@ const set_params = (start, totalCount) => {
 }
 
 const load_last_params = async () => {
+  const { db } = require("./db");
   const params_save = await new Promise((resolve, reject) => {
     db.get("SELECT * FROM save", (err, row) => {
       if (err) {
