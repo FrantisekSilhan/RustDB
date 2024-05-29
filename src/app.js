@@ -29,7 +29,22 @@ app.get("/api/item", async (req, res) => {
       return res.status(404).json({ success: false, error: "Item not found" });
     }
 
-    return res.json({ success: true, data: dbItem });
+    const itemListings = await new Promise((resolve, reject) => {
+      db.get("SELECT * FROM item_listings WHERE id = ?", [dbItem.id], (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        resolve(row);
+      });
+    });
+
+    if (!itemListings) {
+      return res.status(404).json({ success: false, error: "Item listings not found" });
+    }
+
+    return res.json({ success: true, data: { ...dbItem, ...itemListings }});
   } catch (err) {
     fs.appendFileSync(path.join(__dirname, "..", "logs", "error.log"), `Error fetching item ${item}: ${err}\n`);
     return res.status(500).json({ success: false, error: "Internal server error" });
