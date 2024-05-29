@@ -1,6 +1,5 @@
 const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
+const logger = require("./logger");
 
 const params = {
   "search_descriptions": 0,
@@ -22,9 +21,10 @@ const set_params = (start, totalCount) => {
 }
 
 const load_last_params = async () => {
+  logger.debug("Loading last params");
   const { db } = require("./db");
   const params_save = await new Promise((resolve, reject) => {
-    db.get("SELECT * FROM save", (err, row) => {
+    db.get("SELECT * FROM render_save", (err, row) => {
       if (err) {
         reject(err);
         return;
@@ -35,18 +35,20 @@ const load_last_params = async () => {
   });
 
   if (!params_save) {
-    db.run("INSERT INTO save (start, total_count) VALUES (?, ?)", [0, 0]);
+    db.run("INSERT INTO render_save (start, total_count) VALUES (?, ?)", [0, 0]);
   } else {
     set_params(params_save.start, params_save.total_count);
   }
+  logger.debug("Loaded last params");
 }
 
 const fetch_market_data = async () => {
+  logger.debug("Fetching market data");
   try {
     const response = await axios.get(url, { params });
     const { data } = response;
 
-    if (data.success !== true) {
+    if (data && data.success !== true) {
       throw new Error("Steam returned success false");
     }
 
@@ -75,21 +77,27 @@ const fetch_market_data = async () => {
       });
 
       if (!dbItem) {
-        db.run("INSERT INTO items (name, sell_price, sell_listings) VALUES (?, ?, ?)", [item.name, item.sell_price, item.sell_listings]);
+        const item_id = await new Promise((resolve, reject) => {
+          db.run("INSERT INTO items (name) VALUES (?)",
+            [item.name],
+            function(err) {
+              err ? reject(err) : resolve(this.lastID)
+            }
+          );
+        });
+
+        db.run("INSERT INTO item_listings (id, sell_price, sell_listings) VALUES (?, ?, ?)", [item_id, item.sell_price, item.sell_listings]);
       } else {
-        db.run("UPDATE items SET sell_price = ?, sell_listings = ? WHERE name = ?", [item.sell_price, item.sell_listings, item.name]);
+        db.run("UPDATE item_listings SET sell_price = ?, sell_listings = ? WHERE id = ?", [item.sell_price, item.sell_listings, dbItem.id]);
       }
     }
 
     const new_start = data.start + data.pagesize;
     params.start = new_start > total_count ? 0 : new_start;
 
-    db.run("UPDATE save SET start = ?, total_count = ?", [params.start, total_count]);
+    db.run("UPDATE render_save SET start = ?, total_count = ?", [params.start, total_count]);
   } catch (error) {
-    const error_time = new Date().toLocaleString();
-    const error_message = `Error fetching market data at ${error_time}: ${error}\n`;
-    console.error(error_message);
-    fs.appendFileSync(path.join(__dirname, "..", "logs", "error.log"), error_message);
+    logger.error("Failed to fetch market data", error);
   }
 };
 

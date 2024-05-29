@@ -4,6 +4,8 @@ const port = 6978;
 
 const fs = require("fs");
 const path = require("path");
+const logger = require("./logger");
+logger.setLevel("INFO");
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -52,9 +54,15 @@ app.listen(port, async () => {
   
   require("./db").serialize();
 
-  console.log(`Server is running on port ${port}\nhttp://localhost:${port}`);
+  logger.debug(`Server is running on port ${port}\nhttp://localhost:${port}`);
 
   const { fetch_market_data, load_last_params } = require("./market"); 
+  const { fetch_histogram_data, load_last_items_save } = require("./histogram");
   load_last_params();
+  load_last_items_save();
   setInterval(fetch_market_data, 30000);
+  setTimeout(() => {
+    fetch_histogram_data();
+    setInterval(fetch_histogram_data, 15000);
+  }, 40000);
 });
