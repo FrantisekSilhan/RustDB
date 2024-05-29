@@ -63,6 +63,6 @@ app.listen(port, async () => {
   setInterval(fetch_market_data, 30000);
   setTimeout(() => {
     fetch_histogram_data();
-    setInterval(fetch_histogram_data, 15000);
+    setInterval(fetch_histogram_data, 5000);
   }, 40000);
 });
