@@ -62,6 +62,16 @@ app.get("/api/item", async (req, res) => {
   }
 });
 
+app.get("/updates.xml", (_, res) => {
+  res.sendFile(path.join(__dirname, "..", "updates.xml"));
+});
+
+app.get("/bandit_scrapalizer.crx", (_, res) => {
+  res.sendFile(path.join(__dirname, "..", "bandit_scrapalizer.crx"));
+});
+
+app.get("")
+
 app.use((_, res) => {
   res.status(404).json({ success: false, error: "Route not found" });
 });
