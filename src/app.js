@@ -44,7 +44,18 @@ app.get("/api/item", async (req, res) => {
       return res.status(404).json({ success: false, error: "Item listings not found" });
     }
 
-    return res.json({ success: true, data: { ...dbItem, ...itemListings }});
+    const itemInstantListings = await new Promise((resolve, reject) => {
+      db.get("SELECT * FROM item_instant_listings WHERE id = ?", [dbItem.id], (err, row) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        resolve(row);
+      });
+    });
+
+    return res.json({ success: true, data: { ...dbItem, ...itemListings, ...itemInstantListings }});
   } catch (err) {
     fs.appendFileSync(path.join(__dirname, "..", "logs", "error.log"), `Error fetching item ${item}: ${err}\n`);
     return res.status(500).json({ success: false, error: "Internal server error" });
@@ -76,8 +87,5 @@ app.listen(port, async () => {
   load_last_params();
   load_last_items_save();
   setInterval(fetch_market_data, 30000);
-  setTimeout(() => {
-    fetch_histogram_data();
-    setInterval(fetch_histogram_data, 5000);
-  }, 40000);
+  setInterval(fetch_histogram_data, 5000);
 });

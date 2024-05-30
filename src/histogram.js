@@ -81,7 +81,7 @@ const fetch_histogram_data = async () => {
         }
     
         db.run("INSERT OR REPLACE INTO item_identifiers (id, item_id) VALUES (?, ?)", [item.id, item_id]);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 2500));
       } catch (error) {
         logger.error("Error fetching item id", error);
         return;
