@@ -114,7 +114,7 @@ const fetch_histogram_data = async () => {
 
       items_save.previous_id = item.id;
       db.run("UPDATE items_save SET previous_id = ?", [items_save.previous_id]);
-    } catch {
+    } catch (error) {
       logger.error("Error fetching histogram data", error);
       return;
     }
