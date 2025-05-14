@@ -109,7 +109,6 @@ export const runtimeMarketData = pgTable("runtime_market_data", {
 
 export const runtimeHistogramData = pgTable("runtime_histogram_data", {
   item_internal_id: bigint("item_internal_id", { mode: "number" })
-    .notNull()
     .references(() => item.internal_id),
 });
 

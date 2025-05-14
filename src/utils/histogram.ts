@@ -25,8 +25,12 @@ const params: {
   item_nameid: undefined,
 };
 
-const runtimeHistogramData = {
-  item_internal_id: 0,
+const runtimeHistogramData: {
+  item_internal_id: number | null;
+  retry: boolean;
+  retry_count: number;
+} = {
+  item_internal_id: null,
   retry: false,
   retry_count: 0,
 }
@@ -34,7 +38,7 @@ const runtimeHistogramData = {
 const histogramUrl = "https://steamcommunity.com/market/itemorderhistogram/";
 
 interface HistogramData {
-  item_internal_id: number;
+  item_internal_id: number | null;
 }
 
 interface HistogramAPIResponse {
@@ -76,7 +80,7 @@ const loadLastHistogramData = async (): Promise<void> => {
     const newData = await db
       .insert(schema.runtimeHistogramData)
       .values({
-        item_internal_id: 0,
+        item_internal_id: null,
       })
       .returning();
     return setHistogramData(newData[0]);
@@ -97,6 +101,9 @@ const getNextItemId = async (): Promise<
   | { item_id: number }
   | null
 > => {
+  if (runtimeHistogramData.item_internal_id === null) {
+    return null;
+  }
   const nextItem = (await db
     .select()
     .from(schema.item)
@@ -158,6 +165,10 @@ const retry = (value: boolean) => {
 const createItemSnapshot = async (histogramData: HistogramAPIResponse) => {
   const item_internal_id = runtimeHistogramData.item_internal_id;
   retry(true);
+
+  if (!item_internal_id) {
+    return;
+  }
 
   await db.transaction(async (tx) => {
     const itemSnapshot: ItemSnapshot = {
@@ -241,8 +252,11 @@ const fetchHistogramData = async () => {
 
     await createItemSnapshot(histogramData);
     return true;
-  } catch (error) {
-    console.error(`Error fetching histogram data; ${new Date().toISOString()}:`, error);
+  } catch (error: any) {
+    console.error(`Error fetching histogram data; ${new Date().toISOString()}:`);
+    if (error.status === 429) {
+      await new Promise((resolve) => setTimeout(resolve, 30000));
+    }
     return false;
   }
 };

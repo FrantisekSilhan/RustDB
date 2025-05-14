@@ -78,8 +78,11 @@ export const fetchItemId = async ({item_name, item_internal_id}: {item_name: str
       item_id: itemIdNumber,
       name: item_name,
     };
-  } catch (error) {
-    console.error(`Error fetching item ID for ${item_name}; ${new Date().toISOString()}:`, error);
+  } catch (error: any) {
+    console.error(`Error fetching item ID for ${item_name}; ${new Date().toISOString()}:`);
+    if (error.status === 403) {
+      await new Promise((resolve) => setTimeout(resolve, 30000));
+    }
     return null;
   }
 };

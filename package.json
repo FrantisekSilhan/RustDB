@@ -4,8 +4,6 @@
   "module": "src/app.ts",
   "type": "module",
   "scripts": {
-    "build": "bun build src/app.ts --outdir=dist",
-    "start:build": "bun run dist/app.js",
     "start": "bun run src/app.ts"
   },
   "devDependencies": {

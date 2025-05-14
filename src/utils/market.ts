@@ -96,8 +96,11 @@ const fetchMarketDataBatch = async (): Promise<
       items: items,
       total_count: marketData.total_count,
     }
-  } catch (error) {
-    console.error(`Error fetching market data; ${new Date().toISOString()}:`, error);
+  } catch (error: any) {
+    console.error(`Error fetching market data; ${new Date().toISOString()}:`);
+    if (error.status === 429) {
+      await new Promise((resolve) => setTimeout(resolve, 30000));
+    }
     return null;
   }
 };

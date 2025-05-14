@@ -1,0 +1,1 @@
+ALTER TABLE "priority_queue" ADD CONSTRAINT "priority_queue_item_internal_id_unique" UNIQUE("item_internal_id");

@@ -1,0 +1,1 @@
+ALTER TABLE "runtime_histogram_data" ALTER COLUMN "item_internal_id" DROP NOT NULL;
