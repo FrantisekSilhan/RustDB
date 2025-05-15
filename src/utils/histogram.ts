@@ -241,7 +241,7 @@ const fetchHistogramData = async () => {
     const response = await axios.get<HistogramAPIResponse>(histogramUrl, {
       params,
       headers: {
-        "Referer": histogramUrl,
+        "Referer": `${histogramUrl}?${new URLSearchParams(params as any).toString()}`,
       }
     });
     const histogramData = response.data;
