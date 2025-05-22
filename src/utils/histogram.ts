@@ -2,6 +2,7 @@ import { db, schema } from "@/db";
 import axios from "axios";
 import { and, asc, eq, gt, isNotNull } from "drizzle-orm";
 import { fetchItemId, getPriorityItem, removePriorityItem } from "./priority";
+import fs from "fs";
 
 type ItemSnapshot = typeof schema.itemSnapshot.$inferInsert;
 type SellOrder = typeof schema.sellOrder.$inferInsert;
@@ -192,8 +193,8 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
   await db.transaction(async (tx) => {
     const itemSnapshot: ItemSnapshot = {
       item_internal_id: internal_id.item_internal_id,
-      total_sell_requests: Number(histogramData.sell_order_count),
-      total_buy_requests: Number(histogramData.buy_order_count),
+      total_sell_requests: Number(histogramData.sell_order_count.replace(/,/g, "")),
+      total_buy_requests: Number(histogramData.buy_order_count.replace(/,/g, "")),
     };
 
     const snapshot = (await tx
@@ -273,6 +274,9 @@ const fetchHistogramData = async () => {
     return true;
   } catch (error: any) {
     console.error(`Error fetching histogram data: ${error.status}; ${new Date().toISOString()}:`);
+    if (!error.status || error.status !== 429) {
+      fs.appendFileSync("histogram_errors.txt", `${new Date().toISOString()}: ${error}\n`);
+    }
     if (error.status === 429) {
       await new Promise((resolve) => setTimeout(resolve, 30000));
     }
