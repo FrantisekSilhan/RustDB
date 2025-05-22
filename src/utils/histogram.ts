@@ -101,35 +101,34 @@ const getNextItemId = async (): Promise<
   | { item_id: number }
   | null
 > => {
-  if (runtimeHistogramData.item_internal_id === null) {
-    return null;
-  }
-  const nextItem = (await db
-    .select()
-    .from(schema.item)
-    .where(
-      and(
-        gt(schema.item.internal_id, runtimeHistogramData.item_internal_id),
-        isNotNull(schema.item.item_id),
+  if (runtimeHistogramData.item_internal_id !== null) {
+    const nextItem = (await db
+      .select()
+      .from(schema.item)
+      .where(
+        and(
+          gt(schema.item.internal_id, runtimeHistogramData.item_internal_id),
+          isNotNull(schema.item.item_id),
+        )
       )
-    )
-    .orderBy(asc(schema.item.internal_id))
-    .limit(1))[0];
+      .orderBy(asc(schema.item.internal_id))
+      .limit(1))[0];
 
-  if (nextItem) {
-    if (runtimeHistogramData.retry) {
-      runtimeHistogramData.retry_count++;
-      if (runtimeHistogramData.retry_count > 5) {
-        runtimeHistogramData.retry = false;
-        runtimeHistogramData.retry_count = 0;
+    if (nextItem) {
+      if (runtimeHistogramData.retry) {
+        runtimeHistogramData.retry_count++;
+        if (runtimeHistogramData.retry_count > 5) {
+          runtimeHistogramData.retry = false;
+          runtimeHistogramData.retry_count = 0;
+        }
       }
+      if (!runtimeHistogramData.retry) {
+        runtimeHistogramData.item_internal_id = nextItem.internal_id;
+        runtimeHistogramData.retry_count = 0;
+        await saveRuntimeHistogramData(runtimeHistogramData);
+      }
+      return { item_id: nextItem.item_id! };
     }
-    if (!runtimeHistogramData.retry) {
-      runtimeHistogramData.item_internal_id = nextItem.internal_id;
-      runtimeHistogramData.retry_count = 0;
-      await saveRuntimeHistogramData(runtimeHistogramData);
-    }
-    return { item_id: nextItem.item_id! };
   }
 
   const firstItem = (await db
