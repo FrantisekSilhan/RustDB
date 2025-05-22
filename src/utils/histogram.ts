@@ -1,6 +1,6 @@
 import { db, schema } from "@/db";
 import axios from "axios";
-import { and, asc, gt, isNotNull } from "drizzle-orm";
+import { and, asc, eq, gt, isNotNull } from "drizzle-orm";
 import { fetchItemId, getPriorityItem, removePriorityItem } from "./priority";
 
 type ItemSnapshot = typeof schema.itemSnapshot.$inferInsert;
@@ -99,8 +99,21 @@ const saveRuntimeHistogramData = async (data: HistogramData) => {
 
 const getNextItemId = async (): Promise<
   | { item_id: number }
+  | { histogram_priority_queue_item_id: number; }
   | null
 > => {
+  const histogramPriorityItem = (await db
+    .select()
+    .from(schema.histogramPriorityQueue)
+    .innerJoin(schema.item, eq(schema.histogramPriorityQueue.item_internal_id, schema.item.internal_id))
+    .orderBy(asc(schema.item.internal_id))
+    .where(isNotNull(schema.item.item_id))
+    .limit(1))[0];
+
+  if (histogramPriorityItem) {
+    return { histogram_priority_queue_item_id: histogramPriorityItem.items.item_id! };
+  }
+
   if (runtimeHistogramData.item_internal_id !== null) {
     const nextItem = (await db
       .select()
@@ -161,17 +174,24 @@ const retry = (value: boolean) => {
   runtimeHistogramData.retry = value;
 };
 
-const createItemSnapshot = async (histogramData: HistogramAPIResponse) => {
-  const item_internal_id = runtimeHistogramData.item_internal_id;
+const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_nameid: number) => {
+  const internal_id = (await db
+    .select({
+      item_internal_id: schema.item.internal_id,
+    })
+    .from(schema.item)
+    .where(eq(schema.item.item_id, item_nameid))
+    .limit(1))[0];
+
   retry(true);
 
-  if (!item_internal_id) {
+  if (!internal_id || !internal_id.item_internal_id) {
     return;
   }
 
   await db.transaction(async (tx) => {
     const itemSnapshot: ItemSnapshot = {
-      item_internal_id: item_internal_id,
+      item_internal_id: internal_id.item_internal_id,
       total_sell_requests: Number(histogramData.sell_order_count),
       total_buy_requests: Number(histogramData.buy_order_count),
     };
@@ -249,7 +269,7 @@ const fetchHistogramData = async () => {
       throw new Error("Invalid histogram data");
     }
 
-    await createItemSnapshot(histogramData);
+    await createItemSnapshot(histogramData, params.item_nameid);
     return true;
   } catch (error: any) {
     console.error(`Error fetching histogram data; ${new Date().toISOString()}:`);
@@ -281,10 +301,19 @@ const iterate = async ({delay}: {delay: number}) => {
     retry(true);
     return await iterate({delay});
   }
-  params.item_nameid = nextItem.item_id;
+  if ("item_id" in nextItem) {
+    params.item_nameid = nextItem.item_id;
+  } else if ("histogram_priority_queue_item_id" in nextItem) {
+    params.item_nameid = nextItem.histogram_priority_queue_item_id;
+  }
   if (!await fetchHistogramData()) {
     retry(true);
     return await iterate({delay});
+  }
+  if ("histogram_priority_queue_item_id" in nextItem) {
+    await db
+      .delete(schema.histogramPriorityQueue)
+      .where(eq(schema.histogramPriorityQueue.item_internal_id, nextItem.histogram_priority_queue_item_id));
   }
   params.item_nameid = undefined;
   return await iterate({delay});

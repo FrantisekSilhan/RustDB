@@ -38,6 +38,13 @@ export const removePriorityItem = async (item: { item_internal_id: number; item_
     await tx
       .delete(schema.priorityQueue)
       .where(eq(schema.priorityQueue.item_internal_id, item.item_internal_id));
+
+    await tx
+      .insert(schema.histogramPriorityQueue)
+      .values({
+        item_internal_id: item.item_internal_id,
+      })
+      .onConflictDoNothing();
   });
 };
 

@@ -118,3 +118,10 @@ export const priorityQueue = pgTable("priority_queue", {
     .unique()
     .references(() => item.internal_id),
 });
+
+export const histogramPriorityQueue = pgTable("histogram_priority_queue", {
+  item_internal_id: bigint("item_internal_id", { mode: "number" })
+    .notNull()
+    .unique()
+    .references(() => item.internal_id),
+});
