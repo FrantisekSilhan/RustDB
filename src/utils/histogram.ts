@@ -35,7 +35,7 @@ const runtimeHistogramData: {
   retry_count: 0,
 }
 
-const histogramUrl = "https://steamcommunity.com/market/itemordershistogram/";
+const histogramUrl = "https://steamcommunity.com/market/itemordershistogram";
 
 interface HistogramData {
   item_internal_id: number | null;
