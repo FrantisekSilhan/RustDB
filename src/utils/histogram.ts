@@ -272,7 +272,7 @@ const fetchHistogramData = async () => {
     await createItemSnapshot(histogramData, params.item_nameid);
     return true;
   } catch (error: any) {
-    console.error(`Error fetching histogram data; ${new Date().toISOString()}:`);
+    console.error(`Error fetching histogram data: ${error.status}; ${new Date().toISOString()}:`);
     if (error.status === 429) {
       await new Promise((resolve) => setTimeout(resolve, 30000));
     }
