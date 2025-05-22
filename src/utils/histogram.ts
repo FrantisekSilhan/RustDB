@@ -42,7 +42,7 @@ interface HistogramData {
 }
 
 interface HistogramAPIResponse {
-  success: boolean;
+  success: number;
   sell_order_count: string;
   sell_order_price: string;
   sell_order_table: {
@@ -245,7 +245,7 @@ const fetchHistogramData = async () => {
     });
     const histogramData = response.data;
 
-    if (!histogramData || histogramData.success !== true) {
+    if (!histogramData || histogramData.success !== 1) {
       throw new Error("Invalid histogram data");
     }
 
