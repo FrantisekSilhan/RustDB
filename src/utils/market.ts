@@ -163,7 +163,7 @@ const iterate = async ({delay}: {delay: number}) => {
 
   const newItems = await handleItemsResponse(marketData.items);
 
-  console.log(`Fetched ${marketData.items.length} new items; ${new Date().toISOString()}`);
+  console.log(`Fetched ${newItems ? newItems.length : 0} new items; ${new Date().toISOString()}`);
 
   if (newItems) {
     await db
