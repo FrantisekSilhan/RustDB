@@ -50,26 +50,6 @@ export const itemSnapshot = pgTable("item_snapshots", {
     .default(0),
 });
 
-export const sellOrder = pgTable("sell_orders", {
-  snapshot_id: bigint("item_snapshot_id", { mode: "number" })
-    .notNull()
-    .references(() => itemSnapshot.snapshot_id),
-  price: bigint("price", { mode: "number" })
-    .notNull(),
-  quantity: bigint("quantity", { mode: "number" })
-    .notNull(),
-});
-
-export const buyOrder = pgTable("buy_orders", {
-  snapshot_id: bigint("item_snapshot_id", { mode: "number" })
-    .notNull()
-    .references(() => itemSnapshot.snapshot_id),
-  price: bigint("price", { mode: "number" })
-    .notNull(),
-  quantity: bigint("quantity", { mode: "number" })
-    .notNull(),
-});
-
 export const sellOrderGraph = pgTable("sell_order_graphs", {
   snapshot_id: bigint("item_snapshot_id", { mode: "number" })
     .notNull()

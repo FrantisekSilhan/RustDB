@@ -5,8 +5,6 @@ import { fetchItemId, getPriorityItem, removePriorityItem } from "./priority";
 import fs from "fs";
 
 type ItemSnapshot = typeof schema.itemSnapshot.$inferInsert;
-type SellOrder = typeof schema.sellOrder.$inferInsert;
-type BuyOrder = typeof schema.buyOrder.$inferInsert;
 type SellOrderGraph = typeof schema.sellOrderGraph.$inferInsert;
 type BuyOrderGraph = typeof schema.buyOrderGraph.$inferInsert;
 
@@ -220,36 +218,12 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
       };
     });
 
-    const sellOrders: SellOrder[] = histogramData.sell_order_graph.map((item, i) => {
-      const quantity = i === 0 ? item[1] : item[1] - histogramData.sell_order_graph[i - 1][1];
-      return {
-        snapshot_id: snapshot.snapshot_id,
-        price: Math.round(item[0] * 100),
-        quantity: quantity,
-      };
-    });
-
-    const buyOrders: BuyOrder[] = histogramData.buy_order_graph.map((item, i) => {
-      const quantity = i === 0 ? item[1] : item[1] - histogramData.buy_order_graph[i - 1][1];
-      return {
-        snapshot_id: snapshot.snapshot_id,
-        price: Math.round(item[0] * 100),
-        quantity: quantity,
-      };
-    });
-
     await tx
       .insert(schema.sellOrderGraph)
       .values(sellOrdersGraph);
     await tx
       .insert(schema.buyOrderGraph)
       .values(buyOrdersGraph);
-    await tx
-      .insert(schema.sellOrder)
-      .values(sellOrders);
-    await tx
-      .insert(schema.buyOrder)
-      .values(buyOrders);
 
     retry(false);
   });
