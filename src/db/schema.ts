@@ -51,8 +51,6 @@ export const itemSnapshot = pgTable("item_snapshots", {
 });
 
 export const sellOrder = pgTable("sell_orders", {
-  sell_order_id: bigserial("id", { mode: "number" })
-    .primaryKey(),
   snapshot_id: bigint("item_snapshot_id", { mode: "number" })
     .notNull()
     .references(() => itemSnapshot.snapshot_id),
@@ -63,8 +61,6 @@ export const sellOrder = pgTable("sell_orders", {
 });
 
 export const buyOrder = pgTable("buy_orders", {
-  buy_order_id: bigserial("id", { mode: "number" })
-    .primaryKey(),
   snapshot_id: bigint("item_snapshot_id", { mode: "number" })
     .notNull()
     .references(() => itemSnapshot.snapshot_id),
@@ -75,8 +71,6 @@ export const buyOrder = pgTable("buy_orders", {
 });
 
 export const sellOrderGraph = pgTable("sell_order_graphs", {
-  sell_order_graph_id: bigserial("id", { mode: "number" })
-    .primaryKey(),
   snapshot_id: bigint("item_snapshot_id", { mode: "number" })
     .notNull()
     .references(() => itemSnapshot.snapshot_id),
@@ -87,8 +81,6 @@ export const sellOrderGraph = pgTable("sell_order_graphs", {
 });
 
 export const buyOrderGraph = pgTable("buy_order_graphs", {
-  buy_order_graph_id: bigserial("id", { mode: "number" })
-    .primaryKey(),
   snapshot_id: bigint("item_snapshot_id", { mode: "number" })
     .notNull()
     .references(() => itemSnapshot.snapshot_id),
