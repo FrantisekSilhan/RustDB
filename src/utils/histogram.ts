@@ -207,7 +207,7 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
     const sellOrdersGraph: SellOrderGraph[] = histogramData.sell_order_graph.map((item) => {
       return {
         snapshot_id: snapshot.snapshot_id,
-        price: Math.floor(item[0] * 100),
+        price: Math.round(item[0] * 100),
         cumulative_quantity: item[1],
       };
     });
@@ -215,7 +215,7 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
     const buyOrdersGraph: BuyOrderGraph[] = histogramData.buy_order_graph.map((item) => {
       return {
         snapshot_id: snapshot.snapshot_id,
-        price: Math.floor(item[0] * 100),
+        price: Math.round(item[0] * 100),
         cumulative_quantity: item[1],
       };
     });
@@ -224,7 +224,7 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
       const quantity = i === 0 ? item[1] : item[1] - histogramData.sell_order_graph[i - 1][1];
       return {
         snapshot_id: snapshot.snapshot_id,
-        price: Math.floor(item[0] * 100),
+        price: Math.round(item[0] * 100),
         quantity: quantity,
       };
     });
@@ -233,7 +233,7 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
       const quantity = i === 0 ? item[1] : item[1] - histogramData.buy_order_graph[i - 1][1];
       return {
         snapshot_id: snapshot.snapshot_id,
-        price: Math.floor(item[0] * 100),
+        price: Math.round(item[0] * 100),
         quantity: quantity,
       };
     });
