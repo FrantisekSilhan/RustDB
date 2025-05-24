@@ -8,20 +8,18 @@ type ItemSnapshot = typeof schema.itemSnapshot.$inferInsert;
 type SellOrderGraph = typeof schema.sellOrderGraph.$inferInsert;
 type BuyOrderGraph = typeof schema.buyOrderGraph.$inferInsert;
 
-const params: {
+const defaultParams: {
   country: string;
   language: string;
   currency: number;
   two_factor: number;
   norender: number;
-  item_nameid: number | undefined;
 } = {
   country: "US",
   language: "english",
   currency: 1,
   two_factor: 0,
   norender: 1,
-  item_nameid: undefined,
 };
 
 const runtimeHistogramData: {
@@ -109,8 +107,8 @@ const getNextItemId = async (): Promise<
     .where(isNotNull(schema.item.item_id))
     .limit(1))[0];
 
-  if (histogramPriorityItem) {
-    return { histogram_priority_queue_item_id: histogramPriorityItem.items.item_id! };
+  if (histogramPriorityItem && histogramPriorityItem.items && histogramPriorityItem.items.item_id) {
+    return { histogram_priority_queue_item_id: histogramPriorityItem.items.item_id };
   }
 
   if (runtimeHistogramData.item_internal_id !== null) {
@@ -126,7 +124,7 @@ const getNextItemId = async (): Promise<
       .orderBy(asc(schema.item.internal_id))
       .limit(1))[0];
 
-    if (nextItem) {
+    if (nextItem && nextItem.item_id) {
       if (runtimeHistogramData.retry) {
         runtimeHistogramData.retry_count++;
         if (runtimeHistogramData.retry_count > 5) {
@@ -139,7 +137,7 @@ const getNextItemId = async (): Promise<
         runtimeHistogramData.retry_count = 0;
         await saveRuntimeHistogramData(runtimeHistogramData);
       }
-      return { item_id: nextItem.item_id! };
+      return { item_id: nextItem.item_id };
     }
   }
 
@@ -150,7 +148,7 @@ const getNextItemId = async (): Promise<
     .where(isNotNull(schema.item.item_id))
     .limit(1))[0];
 
-  if (firstItem) {
+  if (firstItem && firstItem.item_id) {
     if (runtimeHistogramData.retry) {
       runtimeHistogramData.retry_count++;
       if (runtimeHistogramData.retry_count > 5) {
@@ -163,7 +161,7 @@ const getNextItemId = async (): Promise<
       runtimeHistogramData.retry_count = 0;
       await saveRuntimeHistogramData(runtimeHistogramData);
     }
-    return { item_id: firstItem.item_id! };
+    return { item_id: firstItem.item_id };
   }
   
   return null;
@@ -234,8 +232,8 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
   });
 };
 
-const fetchHistogramData = async () => {
-  if (!params.item_nameid) return false;
+const fetchHistogramData = async ({item_nameid}:{item_nameid: number}) => {
+  const params = { ...defaultParams, item_nameid };
   try {
     const response = await axios.get<HistogramAPIResponse>(histogramUrl, {
       params,
@@ -249,7 +247,7 @@ const fetchHistogramData = async () => {
       throw new Error("Invalid histogram data");
     }
 
-    await createItemSnapshot(histogramData, params.item_nameid);
+    await createItemSnapshot(histogramData, item_nameid);
     return true;
   } catch (error: any) {
     console.error(`Error fetching histogram data: ${error.status}; ${new Date().toISOString()}:`);
@@ -284,12 +282,12 @@ const iterate = async ({delay}: {delay: number}) => {
     retry(true);
     return await iterate({delay});
   }
-  if ("item_id" in nextItem) {
-    params.item_nameid = nextItem.item_id;
-  } else if ("histogram_priority_queue_item_id" in nextItem) {
-    params.item_nameid = nextItem.histogram_priority_queue_item_id;
-  }
-  if (!await fetchHistogramData()) {
+
+  const item_nameid = "item_id" in nextItem
+    ? nextItem.item_id
+    : nextItem.histogram_priority_queue_item_id;
+
+  if (!await fetchHistogramData({ item_nameid: item_nameid})) {
     retry(true);
     return await iterate({delay});
   }
@@ -308,6 +306,5 @@ const iterate = async ({delay}: {delay: number}) => {
         .where(eq(schema.histogramPriorityQueue.item_internal_id, item.item_internal_id));
     }
   }
-  params.item_nameid = undefined;
   return await iterate({delay});
 };
