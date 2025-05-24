@@ -261,6 +261,45 @@ const fetchHistogramData = async ({item_nameid}:{item_nameid: number}) => {
   }
 };
 
+const revalidateCache = async ({item_id}: {item_id: number}) => {
+  const revalidateUrl = process.env.REVALIDATE_URL;
+  const revalidateApiKey = process.env.REVALIDATE_API_KEY;
+
+  const item = (await db
+    .select({
+      item_id: schema.item.item_id,
+      name: schema.item.name,
+      class_id: schema.itemMetadata.class_id,
+    })
+    .from(schema.item)
+    .innerJoin(schema.itemMetadata, eq(schema.item.internal_id, schema.itemMetadata.item_internal_id))
+    .where(eq(schema.item.item_id, item_id))
+    .limit(1))[0];
+  
+  if (!item) {
+    return;
+  }
+
+  try {
+    const response = await axios.post(revalidateUrl!, {
+      item_id: item.item_id,
+      name: item.name,
+      class_id: item.class_id,
+    }, {
+      headers: {
+        "x-api-key": revalidateApiKey,
+        "Content-Type": "application/json",
+      }
+    });
+
+    if (response.status !== 200) {
+      console.error(`Failed to revalidate cache for item ${item.name} (${item.item_id}); status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error(`Error revalidating cache for item ${item.name} (${item.item_id}):`, error);
+  }
+};
+
 export const start = async ({delay}: {delay: number}) => {
   await loadLastHistogramData();
   console.log(`Starting histogram data fetch with delay ${delay}ms in ${delay}ms; ${new Date().toISOString()}`);
@@ -306,5 +345,6 @@ const iterate = async ({delay}: {delay: number}) => {
         .where(eq(schema.histogramPriorityQueue.item_internal_id, item.item_internal_id));
     }
   }
+  revalidateCache({ item_id: item_nameid });
   return await iterate({delay});
 };
