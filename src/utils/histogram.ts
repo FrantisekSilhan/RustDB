@@ -42,23 +42,23 @@ interface HistogramData {
 
 interface HistogramAPIResponse {
   success: number;
-  sell_order_count: string;
-  sell_order_price: string;
+  sell_order_count: string | 0;
+  sell_order_price: string | null;
   sell_order_table: {
     price: string;
     price_with_fee: string;
     quantity: string;
-  }[];
-  buy_order_count: string;
-  buy_order_price: string;
+  }[] | null;
+  buy_order_count: string | 0;
+  buy_order_price: string | null;
   buy_order_table: {
     price: string;
     quantity: string;
-  }[];
-  highest_buy_order: string;
-  lowest_sell_order: string;
-  buy_order_graph: [number, number, string][];
-  sell_order_graph: [number, number, string][];
+  }[] | null;
+  highest_buy_order: string | null;
+  lowest_sell_order: string | null;
+  buy_order_graph: [number, number, string][] | [];
+  sell_order_graph: [number, number, string][] | [];
   graph_max_y: number;
   graph_min_x: number;
   graph_max_x: number;
@@ -191,8 +191,8 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
   await db.transaction(async (tx) => {
     const itemSnapshot: ItemSnapshot = {
       item_internal_id: internal_id.item_internal_id,
-      total_sell_requests: Number(histogramData.sell_order_count.replace(/,/g, "")),
-      total_buy_requests: Number(histogramData.buy_order_count.replace(/,/g, "")),
+      total_sell_requests: histogramData.sell_order_count === 0 ? 0 : Number(histogramData.sell_order_count.replace(/,/g, "")),
+      total_buy_requests: histogramData.buy_order_count === 0 ? 0 : Number(histogramData.buy_order_count.replace(/,/g, "")),
     };
 
     const snapshot = (await tx
@@ -202,28 +202,33 @@ const createItemSnapshot = async (histogramData: HistogramAPIResponse, item_name
         snapshot_id: schema.itemSnapshot.snapshot_id,
       }))[0];
 
-    const sellOrdersGraph: SellOrderGraph[] = histogramData.sell_order_graph.map((item) => {
-      return {
-        snapshot_id: snapshot.snapshot_id,
-        price: Math.round(item[0] * 100),
-        cumulative_quantity: item[1],
-      };
-    });
+    if (histogramData.sell_order_graph.length) {
+      const sellOrdersGraph: SellOrderGraph[] = histogramData.sell_order_graph.map((item) => {
+        return {
+          snapshot_id: snapshot.snapshot_id,
+          price: Math.round(item[0] * 100),
+          cumulative_quantity: item[1],
+        };
+      });
 
-    const buyOrdersGraph: BuyOrderGraph[] = histogramData.buy_order_graph.map((item) => {
-      return {
-        snapshot_id: snapshot.snapshot_id,
-        price: Math.round(item[0] * 100),
-        cumulative_quantity: item[1],
-      };
-    });
+      await tx
+        .insert(schema.sellOrderGraph)
+        .values(sellOrdersGraph);
+    }
 
-    await tx
-      .insert(schema.sellOrderGraph)
-      .values(sellOrdersGraph);
-    await tx
-      .insert(schema.buyOrderGraph)
-      .values(buyOrdersGraph);
+    if (histogramData.buy_order_graph.length) {
+      const buyOrdersGraph: BuyOrderGraph[] = histogramData.buy_order_graph.map((item) => {
+        return {
+          snapshot_id: snapshot.snapshot_id,
+          price: Math.round(item[0] * 100),
+          cumulative_quantity: item[1],
+        };
+      });
+  
+      await tx
+        .insert(schema.buyOrderGraph)
+        .values(buyOrdersGraph);
+    }
 
     retry(false);
   });
