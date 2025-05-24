@@ -293,10 +293,10 @@ const revalidateCache = async ({item_id}: {item_id: number}) => {
     });
 
     if (response.status !== 200) {
-      console.error(`Failed to revalidate cache for item ${item.name} (${item.item_id}); status: ${response.status}`);
+      console.error(`Failed to revalidate cache for item ${item.name} (${item.item_id}); status: ${response.status}; ${new Date().toISOString()}`);
     }
-  } catch (error) {
-    console.error(`Error revalidating cache for item ${item.name} (${item.item_id}):`, error);
+  } catch (error: any) {
+    console.error(`Error revalidating cache for item ${item.name} (${item.item_id}): ${error.status}; ${new Date().toISOString()}`);
   }
 };
 
