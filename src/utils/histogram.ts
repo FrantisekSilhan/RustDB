@@ -294,9 +294,19 @@ const iterate = async ({delay}: {delay: number}) => {
     return await iterate({delay});
   }
   if ("histogram_priority_queue_item_id" in nextItem) {
-    await db
-      .delete(schema.histogramPriorityQueue)
-      .where(eq(schema.histogramPriorityQueue.item_internal_id, nextItem.histogram_priority_queue_item_id));
+    const item = (await db
+      .select({
+        item_internal_id: schema.item.internal_id,
+      })
+      .from(schema.item)
+      .where(eq(schema.item.item_id, nextItem.histogram_priority_queue_item_id))
+      .limit(1))[0];
+
+    if (item) {
+      await db
+        .delete(schema.histogramPriorityQueue)
+        .where(eq(schema.histogramPriorityQueue.item_internal_id, item.item_internal_id));
+    }
   }
   params.item_nameid = undefined;
   return await iterate({delay});
